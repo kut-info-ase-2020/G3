@@ -132,12 +132,12 @@ def main():
             # part 4 task
             dim = 0.81 * temperature + 0.01 * humidity * (0.99 * temperature - 14.3) + 46.3
             if dim <= 75:
-                PGIO.setup(LED_GREEN,GPIO_HIGH)
+                GPIO.setup(LED_GREEN,GPIO_HIGH)
             elif dim < 85:
-                PGIO.setup(LED_YELLOW,GPIO_HIGH)
+                GPIO.setup(LED_YELLOW,GPIO_HIGH)
             else:
-                PGIO.setup(LED_RED,GPIO_HIGH)
-            
+                GPIO.setup(LED_RED,GPIO_HIGH)
+          
             print "humidity: %s %%,  Temperature: %s C, dim: %s" % (humidity, temperature, dim)
         time.sleep(1)
 
