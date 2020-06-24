@@ -126,19 +126,26 @@ def read_dht11_dat():
 def main():
     print "Raspberry Pi wiringPi DHT11 Temperature test program\n"
     while True:
+
         result = read_dht11_dat()
         if result:
             humidity, temperature = result
             # part 4 task
             dim = 0.81 * temperature + 0.01 * humidity * (0.99 * temperature - 14.3) + 46.3
             if dim <= 75:
-                GPIO.setup(LED_GREEN,GPIO_HIGH)
+                GPIO.setup(LED_GREEN,GPIO.HIGH)
+                GPIO.output(LED_RED,GPIO.LOW)
+                GPIO.output(LED_YELLOW,GPIO.LOW)
             elif dim < 85:
-                GPIO.setup(LED_YELLOW,GPIO_HIGH)
+                GPIO.setup(LED_YELLOW,GPIO.HIGH)
+                GPIO.output(LED_RED,GPIO.LOW)
+                GPIO.output(LED_GREEN,GPIO.LOW)
             else:
-                GPIO.setup(LED_RED,GPIO_HIGH)
-          
+                GPIO.setup(LED_RED,GPIO.HIGH)
+                GPIO.output(LED_GREEN,GPIO.LOW)
+                GPIO.output(LED_YELLOW,GPIO.LOW)
             print "humidity: %s %%,  Temperature: %s C, dim: %s" % (humidity, temperature, dim)
+
         time.sleep(1)
 
 def destroy():
