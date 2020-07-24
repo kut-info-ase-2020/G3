@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import datetime
 
 # set GPIO 0 as pin
 MagPIN = 14
@@ -16,17 +17,21 @@ def setup():
 
 #main function
 def main():
-    #print info
+   #print info
     print('start')
-    mag_status_next = 1
+    mag_status_next = 0
+    time_Previous = datetime.datetime.now()
     while True:
         mag_status = GPIO.input(MagPIN)
+        time_Later = datetime.datetime.now() - time_Previous
         if mag_status != mag_status_next:
-            if mag_status < mag_status_next:
-                time_Previous =  time.time()
-            else:
-                time　= time.time() - time_Previous
-                print(time + ' 換気した')
+           if mag_status < mag_status_next:
+             time_Previous = datetime.datetime.now()
+           else:
+             print(str(time_Later))
+        if time_Later.seconds >= 3600:
+           time_Previous = datetime.datetime.now()
+           print('1 hour over') 
         mag_status_next = mag_status
         time.sleep(0.5)
 
