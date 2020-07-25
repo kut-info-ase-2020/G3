@@ -7,6 +7,7 @@ class Sensor ():
 
     # GPIOのPIN
     MagPIN = 14
+    LED = 23
     RLED = 17
     YLED = 22
     GLED = 27
@@ -23,6 +24,7 @@ class Sensor ():
         self.GPIO.setwarnings(False)
         self.GPIO.setmode(GPIO.BCM)
         self.GPIO.setup(MagPIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        self.GPIO.setup(LED,GPIO.OUT,initial=GPIO.LOW)
         self.GPIO.setup(RLED,GPIO.OUT,initial=GPIO.LOW)
         self.GPIO.setup(YLED,GPIO.OUT,initial=GPIO.LOW)
         self.GPIO.setup(GLED,GPIO.OUT,initial=GPIO.LOW)
@@ -53,11 +55,11 @@ class Sensor ():
     #　換気推奨時間超過の有無
     def getOpenWindow(self, NnmTime):
         # 現在の換気推奨時間を超えていた場合,
-        result = self.getBetweenTime(self.PreviousTime) >= (self.hourTime/NumTime):
+        result = self.getBetweenTime(self.PreviousTime) >= (self.hourTime/NumTime)
         if result: 
-                self.setOpenLED(self.RLED)
+                self.setOpenLED(self.LED)
         else:
-                self.setCloseLED(self.RLED)
+                self.setCloseLED(self.LED)
         return result
         
     #　現在時刻までの秒単位時間経過
@@ -66,18 +68,37 @@ class Sensor ():
         return td.seconds
 
     # 現在のppm
+    def getCO2Status(self):
+        ppm = random.uniform(600, 1200)
+        print(ppm)
+        return ppm
+
     # ppmの基準値超過の有無
+    def getCO2over(self, ppmstatus)
+        if ppmstatus < self.ppmOk:
+            self.setOpenLED(self.GLED)
+            self.setCloseLED(self.YLED)
+            self.setCloseLED(self.RLED)
+        elif ppmstatus > self.ppmNo :
+            self.setCloseLED(self.GLED)
+            self.setCloseLED(self.YLED)
+            self.setOpenLED(self.RLED)
+        else:
+            self.setCloseLED(self.GLED)
+            self.setOpenLED(self.YLED)
+            self.setCloseLED(self.RLED)
 
     #　LEDを光らす
     def setOpenLED(self, LED_PIN):
         self.GPIO.output(LED_PIN,GPIO.HIGH)
     
     #　LEDを消す
-    def setCloseLED(self,LED_PEN):
+    def setCloseLED(self,LED_PIN):
          self.GPIO.output(LED_PIN,GPIO.LOW)
 
     #define a destroy function for clean up everything after the script finished
     def close(self):
+        self.GPIO.output(LED,GPIO.LOW)
         self.GPIO.output(RLED,GPIO.LOW)
         self.GPIO.output(YLED,GPIO.LOW)
         self.GPIO.output(GLED,GPIO.LOW)
@@ -91,6 +112,7 @@ if __name__ == '__main__':
             print(s.getMagstatus())
             print(s.getOpenWindow(s.getMagstatus()))
             print(s.getPreviousOpenWindow(2))
+            print(s.getCO2over(s.getCO2Status))
             time.sleep(0.5)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
