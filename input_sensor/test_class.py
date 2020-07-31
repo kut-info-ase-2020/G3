@@ -1,12 +1,12 @@
 import RPi.GPIO as GPIO
 import time
 import datetime
-import random
+import serial
 
 class Sensor():
 
     # GPIOのPIN
-    MagPIN = 14
+    MagPIN = 24
     LED = 23
     RLED = 17
     YLED = 22
@@ -16,7 +16,9 @@ class Sensor():
     min5Time = 10
     ppmOk = 800
     ppmNo = 1000
-    #Co2PIN = 
+    #シリアル送信信号
+    PACKET = [0xff, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79]
+    ZERO = [0xff, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78]
 
     #セットアップ
     def __init__(self):
@@ -28,12 +30,13 @@ class Sensor():
         GPIO.setup(self.RLED,GPIO.OUT,initial=GPIO.LOW)
         GPIO.setup(self.YLED,GPIO.OUT,initial=GPIO.LOW)
         GPIO.setup(self.GLED,GPIO.OUT,initial=GPIO.LOW)
-        #  シリアス通信のセットアップ
+        #  シリアル通信のセットアップ
+        self.s = serial.Serial("/dev/ttyS0", 9600, timeout=1)
         #　出力データのセットアップ
         self.mag_status_next = 1
         self.PreviousTime = datetime.datetime.now()
         self.nowTime = self.PreviousTime
-
+        time.sleep(2)
     #　現在、窓の開閉
     def getMagstatus(self):
         return GPIO.input(self.MagPIN)
@@ -70,9 +73,14 @@ class Sensor():
 
     # 現在のppm
     def getCO2Status(self):
-        ppm = random.uniform(600, 1200)
-        print(ppm)
-        return ppm
+        self.s.write(bytearray(self.PACKET))
+        res = self.s.read(size=9)
+        res = bytearray(res)
+        checksum = 0xff & (~(res[1] + res[2] + res[3] + res[4] + res[5] + res[6] + res[7]) + 1)
+        if res[8] == checksum:
+            return (res[2] << 8) | res[3]
+        else:
+            raise Exception("checksum: " + hex(checksum))
 
     # ppmの基準値超過の有無
     def getCO2over(self, ppmstatus):
@@ -88,6 +96,10 @@ class Sensor():
             self.setCloseLED(self.GLED)
             self.setOpenLED(self.YLED)
             self.setCloseLED(self.RLED)
+            
+    #CO2キャリブレーション
+    def getCO2zero(self):
+        self.s.write(bytearray(self.ZERO))
 
     #　LEDを光らす
     def setOpenLED(self, LED_PIN):
@@ -104,16 +116,15 @@ class Sensor():
         GPIO.output(self.YLED,GPIO.LOW)
         GPIO.output(self.GLED,GPIO.LOW)
         GPIO.cleanup()
+        self.s.close()
 
 # if run this script directly ,do:
 if __name__ == '__main__':
     s = Sensor()
     try:
         while True:
-            print(s.getMagstatus())
-            print(s.getPreviousOpenWindow(s.getMagstatus()))
-            print(s.getOpenWindow(2))
-            s.getCO2over(s.getCO2Status())
+            s.getCO2zero()
+            #s.getCO2over(s.getCO2Status())
             time.sleep(1)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
