@@ -1,8 +1,10 @@
 import RPi.GPIO as GPIO
 import time
+import datetime
 
-# set GPIO 0 as Mag pin
+# set GPIO 0 as pin
 MagPIN = 14
+#Co2PIN = 
 
 #setup function for some setup---custom function
 def setup():
@@ -15,10 +17,22 @@ def setup():
 
 #main function
 def main():
-    #print info
+   #print info
     print('start')
+    mag_status_next = 0
+    time_Previous = datetime.datetime.now()
     while True:
-        print(GPIO.input(MagPIN))
+        mag_status = GPIO.input(MagPIN)
+        time_Later = datetime.datetime.now() - time_Previous
+        if mag_status != mag_status_next:
+           if mag_status < mag_status_next:
+             time_Previous = datetime.datetime.now()
+           else:
+             print(str(time_Later))
+        if time_Later.seconds >= 3600:
+           time_Previous = datetime.datetime.now()
+           print('1 hour over') 
+        mag_status_next = mag_status
         time.sleep(0.5)
 
 #define a destroy function for clean up everything after the script finished
