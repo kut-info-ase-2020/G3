@@ -31,7 +31,7 @@ class Sensor():
         GPIO.setup(self.YLED,GPIO.OUT,initial=GPIO.LOW)
         GPIO.setup(self.GLED,GPIO.OUT,initial=GPIO.LOW)
         #  シリアル通信のセットアップ
-        self.s = serial.Serial("/dev/ttyS0", 9600, timeout=1)
+        self.s = serial.Serial("/dev/serial0", 9600, timeout=1)
         #　出力データのセットアップ
         self.mag_status_next = 1
         self.PreviousTime = datetime.datetime.now()
@@ -74,9 +74,8 @@ class Sensor():
     # 現在のppm
     def getCO2Status(self):
         self.s.write(bytearray(self.PACKET))
-        res = self.s.read(size=9)
-        res = bytearray(res)
-        checksum = 0xff & (~(res[1] + res[2] + res[3] + res[4] + res[5] + res[6] + res[7]) + 1)
+        res = bytearray(self.s.read(9))
+        checksum = 0xff & (~(res[1] + res[2] + res[3] + res[4] + res[5] + res[6] + res[7]) + 0x01)
         if res[8] == checksum:
             return (res[2] << 8) | res[3]
         else:
@@ -122,9 +121,11 @@ class Sensor():
 if __name__ == '__main__':
     s = Sensor()
     try:
+        s.getCO2zero()
         while True:
-            s.getCO2zero()
-            #s.getCO2over(s.getCO2Status())
+            #s.getCO2zero()
+            print(str(s.getCO2Status()))
+            s.getCO2over(s.getCO2Status())
             time.sleep(1)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
