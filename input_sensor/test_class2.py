@@ -122,7 +122,7 @@ class Sensor():
 class Conect():
     def __init__(self):
        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-       self.s.connect(('127.0.0.1', 50007))
+       self.s.connect(('192.168.0.14', 50007))
        
     def setsenddata(self, data):
         strdata = json.dumps(data)
@@ -142,12 +142,12 @@ class Conect():
 # if run this script directly ,do:
 if __name__ == '__main__':
     s = Sensor()
-    c = conect()
+    c = Conect()
     try:
         s.getCO2zero()
         while True:
             #CO2
-            co2_status = s.getCO2Status()))
+            co2_status = s.getCO2Status()
             s.getCO2over(s.getCO2Status())
             
             #sensor
@@ -155,14 +155,14 @@ if __name__ == '__main__':
             
             #データ
             data = {
-                "id":1,
+                "id":2,
                 "CO2": co2_status,
                 "Mag": mag_status,
             }
-            
+            print(data)
             try:
-                c.setsenddata(date)
-            except c.getrecvdata() =! b'ok':
+                c.setsenddata(data)
+            except c.getrecvdata() != b'ok':
                 s.close()
                 c.close()
             
