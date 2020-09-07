@@ -47,6 +47,7 @@ class Sensor():
     def getPreviousOpenWindow(self, magstatus):
         #　窓が開いた場合
         if self.mag_status_next > magstatus:
+            #窓が開いた時刻記録
             self.nowTime = datetime.datetime.now()
             print(self.nowTime)
         #　窓が閉じた場合
@@ -54,9 +55,12 @@ class Sensor():
             # 5分以上開いてた場合, 換気時刻更新
             if self.getBetweenTime(self.nowTime) >= self.min5Time:
                 self.PreviousTime = datetime.datetime.now()
+            #窓が閉まった時刻記録
+            self.nowTime = datetime.datetime.now()
         #　今回の窓の開閉を記録
         self.mag_status_next = magstatus
-        return self.PreviousTime
+        
+        return self.nowTime
 
     #　換気推奨時間超過の有無
     def getOpenWindow(self, NumTime):
@@ -144,6 +148,7 @@ if __name__ == '__main__':
     s = Sensor()
     c = Conect()
     try:
+        num = 1
         s.getCO2zero()
         while True:
             #CO2
@@ -152,20 +157,21 @@ if __name__ == '__main__':
             
             #sensor
             mag_status = s.getMagstatus()
-            
+            time = s.getPreviousOpenWindow(mag_status)
+            magtime_status = s.getBetweenTime(time)
+            mag_flg = getOpenWindow(num)
+
             #データ
             data = {
                 "id":2,
+                "DeviceName":"test",
                 "CO2": co2_status,
                 "Mag": mag_status,
+                "MagTime":magtime_status,
+                "MagTime_NG":int(mag_flg)
             }
             print(data)
-            try:
-                c.setsenddata(data)
-            except c.getrecvdata() != b'ok':
-                s.close()
-                c.close()
-            
+            c.setsenddata(data)
             time.sleep(1)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
