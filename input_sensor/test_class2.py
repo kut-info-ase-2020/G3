@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-import time
+import time as t
 import datetime
 import serial
 import socket
@@ -14,7 +14,7 @@ class Sensor():
     YLED = 22
     GLED = 27
     #基準値
-    hourTime = 60
+    hourTime = 3600
     min5Time = 10
     ppmOk = 800
     ppmNo = 1000
@@ -38,7 +38,7 @@ class Sensor():
         self.mag_status_next = 1
         self.PreviousTime = datetime.datetime.now()
         self.nowTime = self.PreviousTime
-        time.sleep(2)
+        t.sleep(2)
     #　現在、窓の開閉
     def getMagstatus(self):
         return GPIO.input(self.MagPIN)
@@ -65,12 +65,13 @@ class Sensor():
     #　換気推奨時間超過の有無
     def getOpenWindow(self, NumTime):
         # 現在の換気推奨時間を超えていた場合,
-        result = self.getBetweenTime(self.PreviousTime) >= (self.hourTime/NumTime) and self.mag_status_next
+        oktime = self.hourTime/NumTime
+        result = self.getBetweenTime(self.PreviousTime) >= oktime and self.mag_status_next
         if result:
                 self.setOpenLED(self.LED)
         else:
                 self.setCloseLED(self.LED)
-        return result
+        return oktime
 
     #　現在時刻までの秒単位時間経過
     def getBetweenTime(self, laterTime):
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     s = Sensor()
     c = Conect()
     try:
-        num = 1
+        num = 2
         s.getCO2zero()
         while True:
             #CO2
@@ -159,7 +160,7 @@ if __name__ == '__main__':
             mag_status = s.getMagstatus()
             time = s.getPreviousOpenWindow(mag_status)
             magtime_status = s.getBetweenTime(time)
-            mag_flg = getOpenWindow(num)
+            mag_oktime = s.getOpenWindow(num)
 
             #データ
             data = {
@@ -168,11 +169,17 @@ if __name__ == '__main__':
                 "CO2": co2_status,
                 "Mag": mag_status,
                 "MagTime":magtime_status,
-                "MagTime_NG":int(mag_flg)
+                "MagTime_NG":mag_oktime
             }
             print(data)
-            c.setsenddata(data)
-            time.sleep(1)
+            try:
+                c.setsenddata(data)
+                send_status = c.getrecvdata()
+            except send_status == 'ok':
+                s.close()
+                c.close()
+            print(send_status)
+            t.sleep(55)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
         s.close()
