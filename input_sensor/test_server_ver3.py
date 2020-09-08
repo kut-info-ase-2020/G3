@@ -18,8 +18,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print('conect')
         child_pid = os.fork()
         if child_pid == 0:
-            with conn:
-                while True:
+          with conn:
+             try:
+                 while True:
                     # データを受け取る
                     data = conn.recv(1024)
                     if not data:
@@ -31,7 +32,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     date = data.decode()
                     json_dict = json.loads(date)
                     
-                    if json_dict.pop('id') <= 1:
+                    if json_dict.get('id') <= 1:
                         strdata = json.dumps(json_data)
                         bindata = strdata.encode()
                         conn.sendall(bindata)
@@ -39,4 +40,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         response = requests.post(url, data=json_dict)
                         print('raspons ok')
                         conn.sendall(b'ok')
-            conn.close()
+             except KeyboardInterrupt:
+                conn.close()
+                s.close()
+          conn.close()
+
