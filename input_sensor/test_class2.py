@@ -127,7 +127,7 @@ class Sensor():
 class Conect():
     def __init__(self):
        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-       self.s.connect(('192.168.0.14', 50007))
+       self.s.connect(('192.168.0.8', 50007))
        
     def setsenddata(self, data):
         strdata = json.dumps(data)

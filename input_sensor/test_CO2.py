@@ -7,7 +7,7 @@ s = None
 def setup():
     global s
     #シリアル通信の設定
-    s = serial.Serial('/dev/ttyAMA0',baudrate=9600,bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=1.0)
+    s = serial.Serial('/dev/serial0',baudrate=9600,bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=1.0)
     print ("start setup")
     time.sleep(60)
     print ("end setup")
