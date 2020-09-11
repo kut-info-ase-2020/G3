@@ -15,15 +15,15 @@ profile = pipeline.start(config)
 try:
     while True:
         frames = pipeline.wait_for_frames()
-        #IR１
+        
         ir_frame1 = frames.get_infrared_frame(1)
         ir_image1 = np.asanyarray(ir_frame1.get_data())
 
-        #IR2
+    
         ir_frame2 = frames.get_infrared_frame(2)
         ir_image2 = np.asanyarray(ir_frame2.get_data())
 
-        #RGB
+  
         RGB_frame = frames.get_infrared_frame()
         RGB_image = np.asanyarray(ir_frame2.get_data())
 
