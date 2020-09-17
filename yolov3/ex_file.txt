@@ -1,0 +1,21 @@
+プログラムを使用するにあたり、学習済みモデルのダウンロードが必要となる
+
+1. 以下のgitファイルをクロームして、
+   git clone https://github.com/qqwweee/keras-yolo3
+
+2. 以下の学習済みモデルをダウンロード
+   wget https://pjreddie.com/media/files/yolov3.weights
+
+3. ダウンロードしたファイルyolov3.weightsをkeras-yolo3ファイル内に移動
+
+4. 以下のコマンドをkeras-yolo3内で実行する
+   python convert.py yolov3.cfg yolov3.weights model_data/yolo.h5
+
+5. 作成されたmodel_dataディレクトリ内のyolo.h5をG3/yolov3/model_dataディレクトリに移動
+
+6. 以下のコマンドで内部カメラを起動したプログラムの使用が可能となる
+　　python yolo_cam.py
+
+注意：python3.8では実行時にエラーが出るため、python3.7以降のpythonコマンドで実行してください
+　　　pythonのバージョンは以下のコマンドで確認できます
+　　　python --version
