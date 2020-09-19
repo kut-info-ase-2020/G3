@@ -4,12 +4,13 @@ import time
 import itertools
 import math
 import socket
+import json
 
 BACK_TH = 10 # 背景差分後の画像を二値化するための閾値
 AREA_TH = 2000 # 検出した候補領域のうち、小さな領域を取り除くための閾値
 RECT_TH = 100 # 検出した矩形領域をオーバーラップする領域の閾値
-CAMERA_ANGLE = 70
-CAMERA_DIS = 3
+CAMERA_ANGLE = 70 # カメラの画角の設定
+CAMERA_DIS = 3 # カメラから人までの距離
 
 
 class Conect():
@@ -33,7 +34,7 @@ class Conect():
 
 
 def main():
-    #c = Conect()
+    c = Conect()
 
     # 動画の読み込み
     cap = cv2.VideoCapture(0)
@@ -53,53 +54,58 @@ def main():
     #　背景差分法(CNT)のインスタンスを作成
     bg = cv2.bgsegm.createBackgroundSubtractorCNT()
 
-    # フレームの読み込みと背景差分法の適用
-    while(end_flag):
-        start = time.time()
+    try:　
+        # フレームの読み込みと背景差分法の適用
+        while(end_flag):
+            start = time.time()
 
-        # 人検出
-        box_list, human_image = human_detection(bg, frame, AREA_TH)
+            # 人検出
+            box_list, human_image = human_detection(bg, frame, AREA_TH)
 
-        # 人距離推定
-        comb, dis_list, distance_image = human_distance(box_list, CAMERA_ANGLE, CAMERA_DIS, frame.shape[1], human_image)
+            # 人距離推定
+            comb, dis_list, distance_image = human_distance(box_list, CAMERA_ANGLE, CAMERA_DIS, frame.shape[1], human_image)
 
-        flag=True
-        for dis in dis_list:
-            if dis > 2:
-                flag=False
+            flag=True
+            for dis in dis_list:
+                if dis > 2:
+                    flag=False
+                    break
+
+            # データをソケット経由で送信
+            #send_data(c, len(box_list), dis_list, flag)
+
+            # 次のフレームの準備
+            end_flag, frame = cap.read()
+
+            end = time.time() - start
+            #print ("image_time:{0}".format(end) + "[sec]")
+
+            # 検出した結果をウィンドウに表示
+            cv2.imshow('human_view', human_image)
+            cv2.imshow('human_distance', distance_image)
+
+
+            # 動画処理中の中断処理
+            k = cv2.waitKey(1)
+            if k == 27: # ESCキー
                 break
 
-        #send_data(c, len(box_list), dis_list, flag)
+            # 動画への書き込み
+            #video.write(img)
 
+        # 動画を解放
+        #video.release()
 
+    # 'Ctrl+C' が押されたとき、ソケットをクローズ
+    except KeyboardInterrupt:
+            c.close()
 
-        # 次のフレームの準備
-        end_flag, frame = cap.read()
-
-        end = time.time() - start
-        #print ("image_time:{0}".format(end) + "[sec]")
-
-        # 検出した結果をウィンドウに表示
-        cv2.imshow('human_view', human_image)
-        cv2.imshow('human_distance', distance_image)
-
-
-        # 動画処理中の中断処理
-        k = cv2.waitKey(1)
-        if k == 27: # ESCキー
-            break
-
-        # 動画への書き込み
-        #video.write(img)
-
-    # 動画を解放
-    #video.release()
 
     # 終了処理
     cv2.destroyAllWindows()
     cap.release()
 
-
+# 人検出
 def human_detection(bg, frame, area_th):
     # グレースケールに変換
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -134,7 +140,7 @@ def human_detection(bg, frame, area_th):
     return box_list, result_frame
 
 
-
+# 2個のバウンティングボックスの和集合を求める
 def union(a,b):
      x = min(a[0], b[0])
      y = min(a[1], b[1])
@@ -142,35 +148,41 @@ def union(a,b):
      h = max(a[1]+a[3], b[1]+b[3]) - y
      return (x, y, w, h)
 
+# 2個のバウンティングボックスの積集合を求める
 def intersection(a,b):
      x = max(a[0], b[0])
      y = max(a[1], b[1])
      w = min(a[0]+a[2], b[0]+b[2]) - x
      h = min(a[1]+a[3], b[1]+b[3]) - y
+     # ボックス同士がRECT_THの範囲以内にいないなら何も返さない
      if w< -1 * RECT_TH or h< -1 * RECT_TH : return () # or (0,0,0,0) ?
+     # ボックスが重なっている、ボックス同士がRECT_THの範囲以内にいる場合、積集合の値を返す
      return (x, y, w, h)
 
 def combine_boxes(boxes):
     noIntersectLoop = False
     noIntersectMain = False
-    posIndex = 0
+    posIndex = 0 # バウンティングボックスの添字
 
     while noIntersectMain == False:
         noIntersectMain = True
         posIndex = 0
 
+        # ボックスの数だけ処理を実行
         while posIndex < len(boxes):
             noIntersectLoop = False
             while noIntersectLoop == False and len(boxes) > 1:
-                a = boxes[posIndex]
+                a = boxes[posIndex] # 1個目のボックス
                 listBoxes = np.delete(boxes, posIndex, 0)
                 index = 0
-                for b in listBoxes:
 
+                # 1個のボックスを固定して、それに対して他のボックスが統合するか判定
+                for b in listBoxes:
+                    # 各ボックス同士が重なっている、もしくは近い位置にいる場合に実行
                     if intersection(a, b):
-                        newBox = union(a,b)
-                        listBoxes[index] = newBox
-                        boxes = listBoxes
+                        newBox = union(a,b) # 和集合を求める
+                        listBoxes[index] = newBox # 新しいボックスの作成
+                        boxes = listBoxes # ボックス情報の上書き
                         noIntersectLoop = False
                         noIntersectMain = False
                         index = index + 1
@@ -180,6 +192,7 @@ def combine_boxes(boxes):
             posIndex = posIndex + 1
     return boxes
 
+# 距離推定
 def human_distance(box_list, camera_angle, camera_dis, image_width, image):
     point = []
     for box in box_list:
@@ -205,6 +218,7 @@ def human_distance(box_list, camera_angle, camera_dis, image_width, image):
 
     return comb, dis_list, result_image
 
+# データ送信（ソケット通信）
 def send_data(c, human_num, dis_list, dis_flag):
     #データ送信
     data = {
@@ -218,6 +232,7 @@ def send_data(c, human_num, dis_list, dis_flag):
         send_status = c.getrecvdata()
     except send_status == 'ok':
         c.close()
+
 
 if __name__ == '__main__':
     start = time.time()
