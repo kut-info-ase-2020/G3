@@ -12,6 +12,13 @@ RECT_TH = 100 # 検出した矩形領域をオーバーラップする領域の�
 CAMERA_ANGLE = 70 # カメラの画角の設定
 CAMERA_DIS = 3 # カメラから人までの距離
 
+'''
+[参考]
+バウンティングボックスのオーバーラップ関連
+https://stackoverrun.com/ja/q/12688561
+
+'''
+
 
 class Conect():
     def __init__(self):
@@ -159,6 +166,7 @@ def intersection(a,b):
      # ボックスが重なっている、ボックス同士がRECT_THの範囲以内にいる場合、積集合の値を返す
      return (x, y, w, h)
 
+# 近くにあるバウンティングボックスの統合
 def combine_boxes(boxes):
     noIntersectLoop = False
     noIntersectMain = False
