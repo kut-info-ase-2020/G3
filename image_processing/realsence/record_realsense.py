@@ -110,7 +110,7 @@ def record_realsence(export_dir):
 
             # 動画への書き込み・深度情報の保存
             video.write(RGB_image)
-            np.save(export_path + '/'+ export_file + '_{:0>6}'.format(i) , depth_image)
+            np.save(export_dir + '/'+ time_str + '_{:0>6}'.format(i) , depth_image)
 
             i = i+1 # 深度情報のファイル数を更新
 
