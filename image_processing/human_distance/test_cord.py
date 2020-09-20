@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-from human_distance import human_distance # 人との距離推定の実装
+#from human_distance import human_distance # 人との距離推定の実装(水平撮影範囲と焦点距離を指定)
+from human_distance_v2 import human_distance # 人との距離推定の実装(水平画角を指定)
 from ImagePointSelect import ImagePointSelect # 画像をクリックした地点を保存する実装
 from print_distance import print_distance # 人との距離を画像上に表示する実装
 
@@ -30,9 +31,10 @@ def main():
     pr_depth = [depth_image[y][x] for x, y in zip(pr_x, pr_y)]
 
     # 距離推定
-    comb, dis_list = human_distance(width = image.shape[1],pr_x = pr_x, pr_depth=pr_depth, isw=17, fcl=18)
-    print(comb)
-    print(dis_list)
+    #comb, dis_list = human_distance(width = image.shape[1],pr_x = pr_x, pr_depth=pr_depth, isw=17, fcl=18)
+    comb, dis_list = human_distance(width = image.shape[1],pr_x = pr_x, pr_depth=pr_depth, agw=69.4)
+
+    # 結果画像の作成
     result_image = print_distance(image=image, human_comb = comb, pr_x=pr_x, pr_y=pr_y, dis_list= dis_list)
 
     # 画像表示
