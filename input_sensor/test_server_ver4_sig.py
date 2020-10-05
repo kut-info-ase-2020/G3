@@ -40,10 +40,11 @@ def receive_signal(signum, stack):
 #ソケットの設定開始
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     # IPアドレスとポートを指定
-    s.bind(('192.168.11.12', 50007))
+    s.bind(('127.0.0.1', 50007))
     # 1 接続
     s.listen(1)
     # connection するまで待つ
+    print('wait connection...')
 
     ### signal setting
     signal.signal(signal.SIGCHLD, receive_signal)
@@ -54,6 +55,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         conn, addr = s.accept()
         print('conect')
         
+        pid_list = []
+        pid_list.append(os.getpid())
         #プロセス作成
         child_pid = os.fork()
         
@@ -107,5 +110,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         start_time = time.time()
                     #通信相手に処理の終了を知らせる
                     conn.sendall(b'ok')
+          print("pid list is %s ." % pid_list)
           print('close')
           conn.close()
+          
