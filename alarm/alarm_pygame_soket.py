@@ -7,7 +7,7 @@ import json
 class Connect():
     def __init__(self):
        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-       self.s.connect(('192.168.0.8', 50007))
+       self.s.connect(('192.168.0.35', 50007))
        
     def setsenddata(self, data):
         strdata = json.dumps(data)
@@ -16,7 +16,7 @@ class Connect():
         self.s.sendall(bindata)
         
     def getrecvdata(self):
-        # ネットワークのバッファサイズは1024。サーバからの文字列を取得する
+        #ネットワークのバッファサイズは1024。サーバからの文字列を取得する
         data = self.s.recv(1024)
         return data
     
@@ -28,21 +28,22 @@ if __name__=='__main__':
     c = Connect()
     try:
       pygame.mixer.init()
+      pygame.mixer.music.load("Warning-Alarm.mp3")
+      p_ststus = 0
       while True:
         c.setsenddata({"id":1})
+        status = int(c.getrecvdata())
+        print(status)
         
-        status = c.getrecvdata()
-        
-        if status == '1':
-          
-          pygame.mixer.music.load("alarm.mp3")
-
+        if status > p_ststus:
           pygame.mixer.music.play(-1)
 
-        else:
+        elif status < p_ststus:
           pygame.mixer.music.stop()
           
-        time.sleep(60)
+        p_ststus = status
+          
+        time.sleep(10)
     except KeyboardInterrupt:
       c.close()
     
