@@ -161,14 +161,11 @@ if __name__ == '__main__':
                 "CO2": co2_status,
             }
             print(data)
-            try:
-                c.setsenddata(data)
-                send_status = c.getrecvdata()
-            except send_status == 'ok':
-                s.close()
-                c.close()
+            
+            c.setsenddata(data)
+            send_status = c.getrecvdata()
             print(send_status)
-            t.sleep(55)
+            t.sleep(10)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
         s.close()

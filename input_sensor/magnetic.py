@@ -65,7 +65,10 @@ class Sensor():
     #　換気推奨時間超過の有無
     def getOpenWindow(self, NumTime):
         # 現在の換気推奨時間を超えていた場合,
-        oktime = self.hourTime/NumTime
+        if NumTime == 0:
+            oktime = self.hourTime
+        else:
+            oktime = self.hourTime/NumTime
         result = self.getBetweenTime(self.PreviousTime) >= oktime and self.mag_status_next
         if result:
                 self.setOpenLED(self.LED)
@@ -156,7 +159,7 @@ if __name__ == '__main__':
             mag_status = s.getMagstatus()
             time = s.getPreviousOpenWindow(mag_status)
             magtime_status = s.getBetweenTime(time)
-            mag_oktime = s.getOpenWindow(num)
+            mag_oktime = s.getOpenWindow(send_status)
 
             #データ
             data = {
@@ -170,7 +173,7 @@ if __name__ == '__main__':
             send_status = c.getrecvdata()
 
             print(send_status)
-            t.sleep(55)
+            t.sleep(10)
     #when 'Ctrl+C' is pressed,child program destroy() will be executed.
     except KeyboardInterrupt:
         s.close()
